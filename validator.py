@@ -1,4 +1,6 @@
 from domain import Entity
+from exceptii import ValidatorException
+
 
 class Validator(Entity):
     def __init__(self, **kwargs):
@@ -7,10 +9,12 @@ class Validator(Entity):
                 kwargs.pop(_)
         super().__init__(**kwargs)
 
-    def __call__(self, entity):
+    def __call__(self, entity: Entity):
         for name in self:
+            print(name)
             if name in entity:
-                self[name](entity[name])
+                if self[name](entity[name]) == False:
+                    raise ValidatorException(f"validare falsa {name} {entity[name]}")
 
 
 # fct_id_ok = lambda elem: elem>0
