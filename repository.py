@@ -1,8 +1,27 @@
 from domain import Entity
 from exceptii import *
 
+class Pattern(Entity):
+    def __len__(self):
+        count = 0
+        for _ in self:
+            count += 1
+        return count
+    def __eq__(self, other):
+        if len(self.__kwargs) != len(other.__kwargs): return False
+        for p1, p2 in zip(self.__kwargs, other.__kwargs):
+            if p1 != p2:
+                return False
+        return True
+
+    def ok(self, entity: Entity):
+        for key in self:
+            if type(entity[key]) != self[key]:
+                return False
+        return True
+
 class Repository:
-    def __init__(self, pattern = None):
+    def __init__(self, pattern: Pattern = None):
         self._l = []
         self._pattern = pattern
 
@@ -11,19 +30,24 @@ class Repository:
         return self._pattern
 
     @pattern.setter
-    def pattern(self, val):
+    def pattern(self, val: Pattern):
         self._pattern = val
 
     # CRUD
     def adauga(self, obj: Entity):
         if obj in self._l:
             raise RepoException("Element duplicat!")
-        if len(self) == 0:
+        if self._pattern is None:
             self._l.append(obj)
+            # create the pattern
+            pattern = Pattern()
+            for key in obj:
+                pattern[key] = type(obj[key])
+            self._pattern = pattern
             return
-        for k1 in obj:
-            if not k1 in self.pattern:
-                raise RepoException("Pattern mismatch!")
+        if not self._pattern.ok(obj):
+            raise RepoException("Pattern mismatch!")
+        self._l.append(obj)
 
     def stergere(self, obj: Entity):
         if not obj in self._l:
@@ -66,13 +90,29 @@ class FileRepository(Repository):
         self.__path = filename
         super().__init__(pattern)
 
+    @property
+    def pattern(self):
+        self.__read()
+        return self._pattern
+
     def __read(self):
-        self._l = []
+        self._l.clear()
         with open(self.__path, "r") as f:
             for line in f:
                 if line!="":
                     obj = Entity.fromStr(line)
-                    self._l.append(obj)
+                    if self._pattern is None or len(self._pattern) == 0:
+                        self._l.append(obj)
+                        # create the pattern
+                        pattern = Pattern()
+                        for key in obj:
+                            pattern[key] = type(obj[key])
+                        self._pattern = pattern
+                        continue
+                    elif not self._pattern.ok(obj):
+                        raise RepoException("Pattern mismatch!")
+                    else: self._l.append(obj)
+                    #self._l.append(obj)
 
     def __write(self):
         with open(self.__path, "w") as f:

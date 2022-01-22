@@ -7,12 +7,16 @@ def afisare(l):
     for elem in l:
         print(elem)
 
-r = FileRepository("repo.txt", ['id', 'nume', 'bani'])
+pattern = Pattern(id=int, nume=str, bani=float)
+r = FileRepository("repo.txt")
+#print(pattern.ok(r.toList()[0]))
 
 v = Validator()
 
 s = Service(v, r)
-#s.adauga(1, "2", 3)
+#s.adauga(3, "grigore", 10.0)
+#s.stergere(id=1, nume="2")
+#s.modificare(3, "ninja", 11.0, 3, "grigore", 10.0)
+#s.modificare_id(3, "ninja", 11.0)
 afisare(r)
-s.stergere(cheie="")
-afisare(r)
+
