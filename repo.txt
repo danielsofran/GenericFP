@@ -1,0 +1,1 @@
+<class 'int'>#id#2~<class 'str'>#nume#andrei~<class 'float'>#bani#2.3~
