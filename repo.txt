@@ -1,3 +1,5 @@
 <class 'int'>#id#2~<class 'str'>#nume#andrei~<class 'float'>#bani#2.3~
 <class 'int'>#id#1~<class 'str'>#nume#matei~<class 'float'>#bani#3.0~
 <class 'int'>#id#3~<class 'str'>#nume#grigore~<class 'float'>#bani#10.0~
+<class 'int'>#id#4~<class 'str'>#nume#gigel~<class 'float'>#bani#2.0~
+<class 'int'>#id#5~<class 'str'>#nume#6~<class 'float'>#bani#2.0~

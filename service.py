@@ -7,6 +7,10 @@ class Service:
         self.__validator = validator
         self.__repo = repo
 
+    @property
+    def pattern(self):
+        return self.__repo.pattern
+
     def __list_to_obj(self, l, pattern):
         if pattern is None:
             raise NoPatternException
@@ -57,6 +61,9 @@ class Service:
 
     def cautare(self, *lambdas, **kwargs):
         return self.__repo.cautare(*lambdas, **kwargs)
+
+    def afisare(self):
+        return [prod for prod in self.__repo]
 
 
 

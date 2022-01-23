@@ -11,7 +11,6 @@ class Validator(Entity):
 
     def __call__(self, entity: Entity):
         for name in self:
-            print(name)
             if name in entity:
                 if self[name](entity[name]) == False:
                     raise ValidatorException(f"validare falsa {name} {entity[name]}")
