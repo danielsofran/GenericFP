@@ -1,3 +1,5 @@
+import jsonpickle
+
 class Entity:
     def __init__(self, **kwargs):
         self.__kwargs = kwargs
@@ -19,10 +21,8 @@ class Entity:
         return rez[:-2]
 
     def __repr__(self): # fisiere
-        rez = ""
-        for name, value in self.__kwargs.items():
-            rez += f"{type(value)}#{name}#{value}~"
-        return rez
+        json_obj = jsonpickle.encode(self)
+        return str(json_obj)
 
     def __eq__(self, other):
         if len(self.__kwargs) != len(other.__kwargs): return False
@@ -43,17 +43,5 @@ class Entity:
 
     @classmethod
     def fromStr(cls, sir: str):
-        obj = cls()
-        for atr in sir.strip().split("~"):
-            if atr != "":
-                elem = atr.strip().split("#")
-                tip = elem[0][elem[0].find("'")+1 : elem[0].rfind("'")]
-                clas = None
-                if tip=="int": clas=int
-                elif tip=="str": clas=str
-                elif tip=="float": clas=float
-                elif tip=="list": clas=list
-                elif tip=="tuple": clas=tuple
-                elif tip=="set": clas=set
-                obj[elem[1]] = clas(elem[2])
+        obj = jsonpickle.decode(sir)
         return obj

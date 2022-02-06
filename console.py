@@ -43,7 +43,7 @@ e. Exit\n"""
                 print()
             actions = {
                 "1": lambda srv: srv.adauga(*self.createForm()),
-                "2": lambda srv: srv.stergere(*self.createForm("id")),
+                "2": lambda srv: srv.stergere(id=self.createForm("id")[0]),
                 "3": lambda srv: srv.modificare_id(*self.createForm()),
                 "4": cauta,
                 "e": lambda srv: exit(0)
