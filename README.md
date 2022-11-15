@@ -262,20 +262,3 @@ Example
 console=Console(service)
 console.menu()
 ```
-
-```python3
-def myshowall(service: Service):
-    for entity in service._repo:
-        print(f"My entity: {entity}")
-
-actions = {
-    '1': myshowall,
-}
-
-menu = """Menu
-1. MyShowAll
-"""
-cmd = 'Enter command number'
-
-console.menu(menu, cmd, **actions)
-```
