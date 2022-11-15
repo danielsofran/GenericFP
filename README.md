@@ -99,9 +99,20 @@ Represents the way to store a set of entities ***in memory***. It implements *CR
 Example
 ```python3
 person1=Entity(id=1, name='Name1', age=20)
-person1=Entity(id=2, name='Name2', age=18)
-person1=Entity(id=3, name='Name3', age=32)
+person2=Entity(id=2, name='Name2', age=18)
+person3=Entity(id=3, name='Name3', age=32)
 
 pattern=Pattern(id=int, name=str, age=int)
-r = Repository(pattern) # the pattern is optional, but it's not rec
+r = Repository(pattern) # the pattern is optional, but it's not recommended to omit it
+r.adauga(person1)
+r.adauga(person2)
+r.adauga(person3)
+
+def filtru1(entity):
+  return entity['id'] > 1
+  
+de filtru2(entity):
+  return entity['age'] > 18
+
+r.cautare(filtru1, filtru2, lambda e: 'Name' in e['name'], id=1) # returneaza entitatile care respecta filtru1 SAU filtru2 SAU functia inline SAU are id-ul egal cu 1
 ```
