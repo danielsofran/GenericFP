@@ -1,14 +1,13 @@
+from typing import List
+
 from domain import Entity
 from exceptii import *
 
+
 class Pattern(Entity):
-    def __len__(self):
-        count = 0
-        for _ in self:
-            count += 1
-        return count
     def __eq__(self, other):
-        if len(self.__kwargs) != len(other.__kwargs): return False
+        if len(self.__kwargs) != len(other.__kwargs):
+            return False
         for p1, p2 in zip(self.__kwargs, other.__kwargs):
             if p1 != p2:
                 return False
@@ -20,13 +19,21 @@ class Pattern(Entity):
                 return False
         return True
 
+    @classmethod
+    def from_entity(cls, entity: Entity):
+        kwargs = {}
+        for field_name, field_value in entity:
+            kwargs[field_name] = type(field_value)
+        return cls(**kwargs)
+
+
 class Repository:
     def __init__(self, pattern: Pattern = None):
-        self._l = []
+        self._entities = []
         self._pattern = pattern
 
     @property
-    def pattern(self):
+    def pattern(self) -> Pattern:
         return self._pattern
 
     @pattern.setter
@@ -34,11 +41,11 @@ class Repository:
         self._pattern = val
 
     # CRUD
-    def adauga(self, obj: Entity):
-        if obj in self._l:
+    def add(self, obj: Entity) -> None:
+        if obj in self._entities:
             raise RepoException("Element duplicat!")
         if self._pattern is None:
-            self._l.append(obj)
+            self._entities.append(obj)
             # create the pattern
             pattern = Pattern()
             for key in obj:
@@ -47,46 +54,49 @@ class Repository:
             return
         if not self._pattern.ok(obj):
             raise RepoException("Pattern mismatch!")
-        self._l.append(obj)
+        self._entities.append(obj)
 
-    def stergere(self, obj: Entity):
-        if not obj in self._l:
+    def remove(self, obj: Entity) -> None:
+        if obj not in self._entities:
             raise RepoException("Elementul nu a fost gasit!")
-        self._l.remove(obj)
+        self._entities.remove(obj)
 
-    def modificare(self, obj1: Entity, obj2: Entity):
-        if obj1.pattern != obj2.pattern:
+    def modify(self, obj1: Entity, obj2: Entity) -> None:
+        if Pattern.from_entity(obj1) != Pattern.from_entity(obj2):
             raise RepoException("Pattern mismatch!")
-        if obj1 in self._l:
-            i = self._l.index(obj1)
-            self._l[i] = obj2
-        else: raise RepoException("Elementul nu a fost gasit!")
+        if obj1 in self._entities:
+            i = self._entities.index(obj1)
+            self._entities[i] = obj2
+        else:
+            raise RepoException("Elementul nu a fost gasit!")
 
-    def cautare(self, *lambdas, **kwargs):
+    def find(self, *lambdas, **kwargs) -> List[Entity]:
         rez = []
         for fct in lambdas:
-            for elem in self._l:
-                if fct(elem):
-                    if not elem in rez:
-                        rez.append(elem)
+            if callable(fct):
+                for elem in self._entities:
+                    if fct(elem):
+                        if elem not in rez:
+                            rez.append(elem)
 
         for key, value in kwargs.items():
-            for elem in self._l:
+            for elem in self._entities:
                 if elem[key] == value:
                     rez.append(elem)
         return rez
 
-    def __len__(self):
-        return len(self._l)
+    def __len__(self) -> int:
+        return len(self._entities)
 
     def __iter__(self):
-        return iter(self._l)
+        return iter(self._entities)
 
-    def toList(self):
-        return self._l[:]
+    def to_list(self) -> List[Entity]:
+        return self._entities[:]
+
 
 class FileRepository(Repository):
-    def __init__(self, filename, pattern = None):
+    def __init__(self, filename, pattern=None):
         self.__path = filename
         super().__init__(pattern)
 
@@ -95,14 +105,14 @@ class FileRepository(Repository):
         self.__read()
         return self._pattern
 
-    def __read(self):
-        self._l.clear()
+    def __read(self) -> None:
+        self._entities.clear()
         with open(self.__path, "r") as f:
             for line in f:
-                if line!="":
-                    obj = Entity.fromStr(line)
+                if line != "":
+                    obj = Entity.from_str(line)
                     if self._pattern is None or len(self._pattern) == 0:
-                        self._l.append(obj)
+                        self._entities.append(obj)
                         # create the pattern
                         pattern = Pattern()
                         for key in obj:
@@ -111,41 +121,42 @@ class FileRepository(Repository):
                         continue
                     elif not self._pattern.ok(obj):
                         raise RepoException("Pattern mismatch!")
-                    else: self._l.append(obj)
-                    #self._l.append(obj)
+                    else:
+                        self._entities.append(obj)
+                    # self._entities.append(obj)
 
-    def __write(self):
+    def __write(self) -> None:
         with open(self.__path, "w") as f:
-            for elem in self._l:
-                f.write(repr(elem)+"\n")
+            for elem in self._entities:
+                f.write(repr(elem) + "\n")
 
-    def adauga(self, obj: Entity):
+    def add(self, obj: Entity) -> None:
         self.__read()
-        super(FileRepository, self).adauga(obj)
+        super(FileRepository, self).add(obj)
         self.__write()
 
-    def stergere(self, obj: Entity):
+    def remove(self, obj: Entity) -> None:
         self.__read()
-        super().stergere(obj)
+        super().remove(obj)
         self.__write()
 
-    def modificare(self, obj1: Entity, obj2: Entity):
+    def modify(self, obj1: Entity, obj2: Entity) -> None:
         self.__read()
-        super().modificare(obj1, obj2)
+        super().modify(obj1, obj2)
         self.__write()
 
-    def cautare(self, *lambdas, **kwargs):
+    def find(self, *lambdas, **kwargs) -> List[Entity]:
         self.__read()
-        return super().cautare(*lambdas, **kwargs)
+        return super().find(*lambdas, **kwargs)
 
-    def __len__(self):
+    def __len__(self) -> int:
         self.__read()
         return super().__len__()
 
-    def __iter__(self):
+    def __iter__(self) -> iter:
         self.__read()
         return super().__iter__()
 
-    def toList(self):
+    def to_list(self) -> List[Entity]:
         self.__read()
-        return super().toList()
+        return super().to_list()

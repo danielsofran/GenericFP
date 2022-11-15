@@ -1,69 +1,75 @@
+from typing import List
+
 from domain import Entity
 from exceptii import NoPatternException, ServiceException
+from repository import Repository, Pattern
+from validator import Validator
 
 
 class Service:
-    def __init__(self, validator, repo):
-        self.__validator = validator
-        self.__repo = repo
+    def __init__(self, validator: Validator, repo: Repository):
+        self._validator = validator
+        self._repo = repo
 
     @property
-    def pattern(self):
-        return self.__repo.pattern
+    def pattern(self) -> Pattern:
+        return self._repo.pattern
 
-    def __list_to_obj(self, l, pattern):
+    def _list_of_fields_to_entity(self, lst) -> Entity:
+        pattern = self._repo.pattern
         if pattern is None:
             raise NoPatternException
         dct = {}
         for i, _ in enumerate(pattern):
-            dct[_] = l[i]
+            dct[_] = lst[i]
         return Entity(**dct)
 
-    def adauga(self, *args):
-        pattern = self.__repo.pattern
-        obj = self.__list_to_obj(args, pattern)
-        self.__validator(obj)
-        self.__repo.adauga(obj)
+    def add(self, *args) -> None:
+        obj = self._list_of_fields_to_entity(args)
+        self._validator(obj)
+        self._repo.add(obj)
 
-    def stergere(self, **kwargs):
+    def remove(self, *lambdas, **kwargs) -> None:
+        for fct in lambdas:
+            if callable(fct):
+                for elem in self._repo:
+                    if fct(elem):
+                        self._repo.remove(elem)
         for key, value in kwargs.items():
-            if key in self.__repo.pattern:
+            if key in self._repo.pattern:
                 to_erase = []
-                for elem in self.__repo:
+                for elem in self._repo:
                     if elem[key] == value:
                         to_erase.append(elem)
                 for elem in to_erase:
-                    self.__repo.stergere(elem)
+                    self._repo.remove(elem)
 
-    def modificare(self, *args):
-        pattern = self.__repo.pattern
-        obj1 = self.__list_to_obj(args[:len(args)//2], pattern)
-        obj2 = self.__list_to_obj(args[len(args)//2:], pattern)
-        self.__validator(obj1)
-        self.__validator(obj2)
-        self.__repo.modificare(obj1, obj2)
+    def modify(self, *args) -> None:
+        if len(args) != 2*len(self.pattern):
+            raise ServiceException("Invalid number of arguments!")
+        obj1 = self._list_of_fields_to_entity(args[:len(args) // 2])
+        obj2 = self._list_of_fields_to_entity(args[len(args) // 2:])
+        self._validator(obj1)
+        self._validator(obj2)
+        self._repo.modify(obj1, obj2)
 
-    def modificare_id(self, *args): # cautam obiectul dupa primul camp si modificam celelalte campuri
-        pattern = self.__repo.pattern
-        obj = self.__list_to_obj(args, pattern)
+    def modify_firstfield(self, *args) -> None:  # cautam obiectul dupa primul camp si modificam celelalte campuri
+        obj = self._list_of_fields_to_entity(args)
         # after creating obj
         firstfield = None
         for field in obj:
             firstfield = field
             break
-        pattern = self.__repo.pattern
+        pattern = self._repo.pattern
         for field in pattern:
             if firstfield != field:
                 raise ServiceException("Mismatch pattern in search by first field!")
             break
-        objfound = self.__repo.cautare(**{firstfield: obj[firstfield]})[0]
-        self.__repo.modificare(objfound, obj)
+        objfound = self._repo.find(**{firstfield: obj[firstfield]})[0]
+        self._repo.modify(objfound, obj)
 
-    def cautare(self, *lambdas, **kwargs):
-        return self.__repo.cautare(*lambdas, **kwargs)
+    def find(self, *lambdas, **kwargs) -> List[Entity]:
+        return self._repo.find(*lambdas, **kwargs)
 
-    def afisare(self):
-        return [prod for prod in self.__repo]
-
-
-
+    def get_elements(self) -> List[Entity]:
+        return self._repo.to_list()
